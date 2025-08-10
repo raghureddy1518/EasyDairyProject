@@ -8,6 +8,8 @@ WORKDIR /app
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+COPY .env .env
+
 
 # 4️⃣ Make mvnw executable
 RUN chmod +x mvnw
