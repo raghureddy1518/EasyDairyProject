@@ -9,14 +9,17 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
-# 4️⃣ Install dependencies (skip tests)
+# 4️⃣ Make mvnw executable
+RUN chmod +x mvnw
+
+# 5️⃣ Install dependencies (skip tests)
 RUN ./mvnw dependency:go-offline -B
 
-# 5️⃣ Copy source code
+# 6️⃣ Copy source code
 COPY src src
 
-# 6️⃣ Build the jar
+# 7️⃣ Build the jar
 RUN ./mvnw clean package -DskipTests
 
-# 7️⃣ Run the application
+# 8️⃣ Run the application
 CMD ["java", "-jar", "target/EasyDairy1-0.0.1-SNAPSHOT.jar"]
