@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Milk Entry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa; }
+        h2 { margin-bottom: 20px; color: #333; }
+        form {
+            background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            max-width: 400px; margin: 0 auto;
+        }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        select, input[type="date"], input[type="number"], button, .readonly-field {
+            padding: 10px; margin-top: 5px; width: 100%; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+        .readonly-field {
+            background: #e9ecef;
+            cursor: not-allowed;
+        }
+        button {
+            background: #28a745; color: white; border: none; cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+        }
+        button:hover { background: #218838; }
+
+        /* Radio buttons group styling */
+        .preset-radios {
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .preset-radios label {
+            font-weight: normal;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.95rem;
+        }
+        .preset-radios input[type="radio"] {
+            margin-right: 5px;
+            transform: scale(1.2);
+            vertical-align: middle;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h2>✏️ Edit Milk Entry</h2>
+
+<form th:action="@{/milk-entries/update}" method="post" th:object="${entry}">
+    <input type="hidden" th:field="*{id}" />
+
+    <label>Customer:</label>
+    <!-- Show only selected customer name, no change -->
+    <input type="text" class="readonly-field" th:value="${entry.customerName}" readonly />
+    <!-- Hidden input to submit customerId -->
+    <input type="hidden" th:field="*{customerId}" />
+
+	<label>Date:</label>
+	<input type="date" name="date" th:value="${formattedDate}" required />
+
+
+
+    <label>Liters:</label>
+    <input type="number" step="0.01" th:field="*{liters}" id="litersInput" required />
+
+    <!-- Preset liters radio buttons -->
+    <div class="preset-radios">
+        <label><input type="radio" name="presetLiters" value="1" /> 1</label>
+        <label><input type="radio" name="presetLiters" value="0.75" /> 0.75</label>
+        <label><input type="radio" name="presetLiters" value="1.5" /> 1.5</label>
+        <label><input type="radio" name="presetLiters" value="0.5" /> 0.5</label>
+        <label><input type="radio" name="presetLiters" value="0.25" /> 0.25</label>
+        <label><input type="radio" name="presetLiters" value="" checked /> Clear</label>
+    </div>
+
+    <button type="submit">💾 Save</button>
+</form>
+
+<script>
+    const radios = document.querySelectorAll('.preset-radios input[type="radio"]');
+    const litersInput = document.getElementById('litersInput');
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value) {
+                litersInput.value = parseFloat(radio.value).toFixed(2);
+            } else {
+                litersInput.value = '';
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Day-wise Milk Delivery Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* Reset some basics */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background: #f9fafb;
+      color: #222;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 700;
+      color: #2c3e50;
+      font-size: 1.9rem;
+      letter-spacing: 0.03em;
+    }
+
+    a.back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      background-color: #34495e;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    a.back-link:hover,
+    a.back-link:focus {
+      background-color: #2c3e50;
+      outline: none;
+    }
+
+    form {
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    label {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #34495e;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 120px;
+    }
+    label input[type="number"] {
+      margin-top: 6px;
+      padding: 8px 10px;
+      font-size: 1rem;
+      border: 1.5px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 150px;
+      transition: border-color 0.3s ease;
+    }
+    label input[type="number"]:focus {
+      border-color: #2980b9;
+      outline: none;
+      box-shadow: 0 0 6px #2980b9a0;
+    }
+
+    form button {
+      background-color: #27ae60;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 10px 22px;
+	  margin-top: 25px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      min-width: 110px;
+      user-select: none;
+    }
+    form button:hover,
+    form button:focus {
+      background-color: #1e8449;
+      outline: none;
+    }
+
+    #exportButtons {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    #exportButtons button {
+      background-color: #2980b9;
+      color: white;
+      border: none;
+      font-weight: 600;
+      padding: 10px 25px;
+      margin: 0 10px 10px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      min-width: 140px;
+      box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+    }
+    #exportButtons button:hover,
+    #exportButtons button:focus {
+      background-color: #1f618d;
+      outline: none;
+    }
+
+    /* Responsive table container for horizontal scroll */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
+      border-radius: 8px;
+      background-color: white;
+      padding: 10px 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 700px;
+      font-size: 0.95rem;
+      text-align: center;
+      user-select: none;
+    }
+    thead tr {
+      background-color: #ecf0f1;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      box-shadow: inset 0 -2px 4px rgb(0 0 0 / 0.07);
+    }
+    th, td {
+      border: 1px solid #dcdcdc;
+      padding: 10px 12px;
+      vertical-align: middle;
+      min-width: 120px;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:hover {
+      background-color: #f0f8ff;
+      transition: background-color 0.25s ease;
+    }
+    tfoot tr {
+      background-color: #f9f9f9;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    tfoot td {
+      border-top: 2px solid #2980b9;
+    }
+
+    /* Smaller screens */
+    @media (max-width: 600px) {
+      body {
+        margin: 12px 8px;
+      }
+      h2 {
+        font-size: 1.5rem;
+      }
+      form {
+        flex-direction: column;
+        gap: 10px;
+      }
+      label {
+        min-width: 100%;
+      }
+      label input[type="number"] {
+        max-width: 100%;
+      }
+      form button {
+        width: 100%;
+        min-width: unset;
+      }
+      #exportButtons button {
+        width: 100%;
+        margin: 6px 0;
+        min-width: unset;
+      }
+      .table-container {
+        padding: 0 6px;
+      }
+      table {
+        min-width: 600px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Day-wise Milk Delivery Report</h2>
+  <a href="/dashboard" class="back-link" aria-label="Back to Dashboard">← Back to Dashboard</a>
+
+  <form method="get" action="/milk-entries/daywise" aria-label="Filter report by month and year">
+    <label for="monthInput">Month:
+      <input
+        type="number"
+        id="monthInput"
+        name="month"
+        min="1"
+        max="12"
+        th:value="${month}"
+        aria-required="true"
+        aria-describedby="monthHelp"
+        placeholder="1-12"
+      >
+    </label>
+    <label for="yearInput">Year:
+      <input
+        type="number"
+        id="yearInput"
+        name="year"
+        min="2000"
+        max="2100"
+        th:value="${year}"
+        aria-required="true"
+        aria-describedby="yearHelp"
+        placeholder="YYYY"
+      >
+    </label>
+    <button type="submit">Filter</button>
+  </form>
+
+  <div id="exportButtons">
+    <button type="button" onclick="downloadReport()" aria-label="Export report as Excel">Export to Excel</button>
+    <button type="button" onclick="exportTableToPDF()" aria-label="Export report as PDF">Export to PDF</button>
+  </div>
+
+  <div class="table-container" role="region" aria-label="Milk delivery report table">
+    <table id="milkReport" tabindex="0">
+      <thead>
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col" th:each="customer : ${customers}" th:text="${customer.name}"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="day : ${#numbers.sequence(1, daysInMonth)}">
+          <td th:text="${#temporals.format(#temporals.create(year, month, day), 'dd-MMM-yyyy (EEE)')}"></td>
+          <td
+            th:each="custIndex : ${#numbers.sequence(0, customers.size()-1)}"
+            th:text="${litersMatrix[day-1][custIndex] > 0 ? litersMatrix[day-1][custIndex] : '-'}"
+          ></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Total</td>
+          <td th:each="custIndex : ${#numbers.sequence(0, customers.size()-1)}" th:text="${totals[custIndex]}"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- jsPDF and jsPDF-AutoTable CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    function downloadReport() {
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+
+      const monthInput = document.getElementById("monthInput");
+      const yearInput = document.getElementById("yearInput");
+
+      const month = parseInt(monthInput.value) || new Date().getMonth() + 1;
+      const year = parseInt(yearInput.value) || new Date().getFullYear();
+
+      const fileName = `${monthNames[month - 1]}_${year}_Report`;
+
+      exportTableToExcel('milkReport', fileName);
+    }
+
+    function exportTableToExcel(tableID, filename = '') {
+      const tableSelect = document.getElementById(tableID);
+      const tableHTML = `
+        <html xmlns:x="urn:schemas-microsoft-com:office:excel">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            td, th {
+              text-align: center;
+              vertical-align: middle;
+              mso-number-format:"\\@"; /* Keep as text */
+              width: 120px;
+              height: 25px;
+            }
+          </style>
+        </head>
+        <body>
+          ${tableSelect.outerHTML}
+        </body>
+        </html>`;
+
+      filename = filename ? filename + '.xls' : 'excel_data.xls';
+      const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+
+    async function exportTableToPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFontSize(16);
+      doc.setTextColor("#2c3e50");
+      doc.text("Day-wise Milk Delivery Report", 14, 20);
+
+      const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ];
+      const month = parseInt(document.getElementById("monthInput").value) || new Date().getMonth() + 1;
+      const year = document.getElementById("yearInput").value || new Date().getFullYear();
+      const fileName = `${monthNames[month - 1]}_${year}_Report.pdf`;
+
+      const table = document.getElementById('milkReport');
+
+      // Extract table headers
+      const headers = [];
+      table.querySelectorAll('thead tr th').forEach(th => {
+        headers.push(th.innerText.trim());
+      });
+
+      // Extract table body data (tbody)
+      const data = [];
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        const rowData = [];
+        tr.querySelectorAll('td').forEach(td => {
+          rowData.push(td.innerText.trim());
+        });
+        data.push(rowData);
+      });
+
+      // Extract total row data (tfoot)
+      const footerRow = [];
+      const tfoot = table.querySelector('tfoot tr');
+      if (tfoot) {
+        tfoot.querySelectorAll('td').forEach(td => {
+          footerRow.push(td.innerText.trim());
+        });
+      }
+
+      // Add footer row to data, with special style
+      data.push(footerRow);
+
+      doc.autoTable({
+        head: [headers],
+        body: data,
+        startY: 30,
+        styles: { fontSize: 8, cellWidth: 'wrap' },
+        headStyles: { fillColor: [236, 240, 241], textColor: 44, fontStyle: 'bold' },
+        theme: 'grid',
+        margin: { top: 30, left: 14, right: 14, bottom: 20 },
+        didParseCell: function (data) {
+          if (data.row.index === data.table.body.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fillColor = [249, 249, 249];
+          }
+        }
+      });
+
+      doc.save(fileName);
+    }
+  </script>
+</body>
+</html>

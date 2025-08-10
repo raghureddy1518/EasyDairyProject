@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Daily Milk Entries</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        h1 { text-align: center; margin-bottom: 20px; color: #333; }
+        
+        .form-section, .filter-section {
+            background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        label { font-weight: bold; display: block; margin-top: 10px; }
+        select, input[type="date"], input[type="number"], input[type="submit"], button {
+            padding: 8px; margin-top: 5px; width: 100%; box-sizing: border-box; border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+        }
+        
+        input[type="submit"], button {
+            background: #28a745; color: white; border: none; cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover, button:hover { background: #218838; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 30px; }
+        table th, table td {
+            border: 1px solid #ccc; padding: 8px; text-align: center;
+        }
+        table th { background-color: #f2f2f2; }
+        
+        .btn-delete, .btn-edit {
+            padding: 4px 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            margin: 0 4px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .btn-delete {
+            background: red;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: darkred;
+        }
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+        .btn-edit:hover {
+            background: #0056b3;
+        }
+
+        /* Radio buttons group styling */
+        .preset-radios {
+            margin-top: 5px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .preset-radios label {
+            font-weight: normal;
+            cursor: pointer;
+            user-select: none;
+        }
+        .preset-radios input[type="radio"] {
+            margin-right: 5px;
+            transform: scale(1.2);
+            vertical-align: middle;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Daily Milk Entries</h1>
+
+<!-- Back Button -->
+<a href="/dashboard" style="
+    display: inline-block;
+    margin-bottom: 15px;
+    padding: 8px 15px;
+    background-color: #6c757d;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+">
+    ← Back to Dashboard
+</a>
+
+<!-- Filter Form -->
+<div class="filter-section">
+    <form th:action="@{/milk-entries}" method="get">
+        <label for="filterDate">Filter by Date</label>
+        <input type="date" id="filterDate" name="date" th:value="${selectedDate}" placeholder="Select date" />
+        <input type="submit" value="Apply Filter" />
+    </form>
+</div>
+
+<!-- Form to Add Milk Entry -->
+<div class="form-section">
+    <form th:action="@{/milk-entries/add}" method="post" th:object="${milkEntryForm}">
+        <label for="customerSelect">Select Customer</label>
+        <select id="customerSelect" name="customerId" required>
+            <option value="" disabled selected>Select Customer</option>
+            <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.name}"></option>
+        </select>
+
+        <label for="entryDate">Date</label>
+        <input type="date" id="entryDate" name="date" th:value="${selectedDate}" required />
+
+        <label for="litersInput">Liters</label>
+        <input type="number" step="0.01" id="litersInput" name="liters" placeholder="Enter liters" required />
+
+        <!-- Preset liters radio buttons -->
+        <div class="preset-radios" role="radiogroup" aria-label="Preset liters options">
+            <label><input type="radio" name="presetLiters" value="1" /> 1</label>
+            <label><input type="radio" name="presetLiters" value="0.75" /> 0.75</label>
+            <label><input type="radio" name="presetLiters" value="1.5" /> 1.5</label>
+            <label><input type="radio" name="presetLiters" value="0.5" /> 0.5</label>
+            <label><input type="radio" name="presetLiters" value="0.25" /> 0.25</label>
+            <label><input type="radio" name="presetLiters" value="" checked /> Clear</label>
+        </div>
+
+        <input type="submit" value="Save Entry" />
+    </form>
+</div>
+
+<!-- Table of Customers & Entries -->
+<table>
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Liters</th>
+            <th>Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="customer : ${customers}">
+            <td th:text="${customer.name}"></td>
+            <td th:text="${entryMap[customer.id] != null ? entryMap[customer.id].liters : ''}"></td>
+            <td th:text="${entryMap[customer.id] != null ? entryMap[customer.id].date : ''}"></td>
+            <td>
+                <span th:if="${entryMap[customer.id] != null}">
+                    <a th:href="@{/milk-entries/edit/{id}(id=${entryMap[customer.id].id})}" class="btn-edit">Edit</a>
+                    <a href="#"
+                       class="btn-delete"
+                       th:attr="data-delete-url=@{/milk-entries/delete/{id}(id=${entryMap[customer.id].id})}"
+                       onclick="confirmDelete(event, this)">Delete</a>
+                </span>
+                <span th:if="${entryMap[customer.id] == null}">-</span>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(customers)}">
+            <td colspan="4">No customers found.</td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    const radios = document.querySelectorAll('.preset-radios input[type="radio"]');
+    const litersInput = document.getElementById('litersInput');
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value) {
+                litersInput.value = parseFloat(radio.value).toFixed(2);
+            } else {
+                litersInput.value = '';
+            }
+        });
+    });
+
+    // If user manually types in liters, clear radio selection
+    litersInput.addEventListener('input', () => {
+        radios.forEach(radio => radio.checked = false);
+    });
+
+    function confirmDelete(event, el) {
+        event.preventDefault();
+        const url = el.getAttribute('data-delete-url');
+        if (confirm('Are you sure you want to delete this entry?')) {
+            window.location.href = url;
+        }
+    }
+</script>
+
+</body>
+</html>
