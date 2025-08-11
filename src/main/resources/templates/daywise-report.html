@@ -257,15 +257,20 @@
         </tr>
       </thead>
       <tbody>
-        <tr th:each="day : ${#numbers.sequence(1, daysInMonth)}">
+        <!-- If customers exist, show rows -->
+        <tr th:if="${customers != null and !customers.isEmpty()}"
+            th:each="day : ${#numbers.sequence(1, daysInMonth)}">
           <td th:text="${#temporals.format(#temporals.create(year, month, day), 'dd-MMM-yyyy (EEE)')}"></td>
-          <td
-            th:each="custIndex : ${#numbers.sequence(0, customers.size()-1)}"
-            th:text="${litersMatrix[day-1][custIndex] > 0 ? litersMatrix[day-1][custIndex] : '-'}"
-          ></td>
+          <td th:each="custIndex : ${#numbers.sequence(0, customers.size()-1)}"
+              th:text="${litersMatrix[day-1][custIndex] > 0 ? litersMatrix[day-1][custIndex] : '-'}">
+          </td>
+        </tr>
+        <!-- If no customers -->
+        <tr th:if="${customers == null or customers.isEmpty()}">
+          <td colspan="100%">No customers found</td>
         </tr>
       </tbody>
-      <tfoot>
+      <tfoot th:if="${customers != null and !customers.isEmpty()}">
         <tr>
           <td>Total</td>
           <td th:each="custIndex : ${#numbers.sequence(0, customers.size()-1)}" th:text="${totals[custIndex]}"></td>
@@ -378,7 +383,9 @@
       }
 
       // Add footer row to data, with special style
-      data.push(footerRow);
+      if (footerRow.length > 0) {
+        data.push(footerRow);
+      }
 
       doc.autoTable({
         head: [headers],
@@ -389,7 +396,7 @@
         theme: 'grid',
         margin: { top: 30, left: 14, right: 14, bottom: 20 },
         didParseCell: function (data) {
-          if (data.row.index === data.table.body.length - 1) {
+          if (data.row.index === data.table.body.length - 1 && footerRow.length > 0) {
             data.cell.styles.fontStyle = 'bold';
             data.cell.styles.fillColor = [249, 249, 249];
           }
