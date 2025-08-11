@@ -17,10 +17,11 @@ public class AuthController {
     @Autowired
     private AdminRepository adminRepository;
 
-    @GetMapping("/admin/login")
+    @GetMapping({"/", "/admin/login"})
     public String showLoginPage() {
         return "login";
     }
+
 
     @PostMapping("/admin/login")
     public String processLogin(@RequestParam String username,
